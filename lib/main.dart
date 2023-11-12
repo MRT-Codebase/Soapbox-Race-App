@@ -36,14 +36,15 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
   bool isStopwatchRunning = false;
 
   late MQTTHandler mqttHandler;
+  bool connectionStatus = false;
 
   @override
   void initState() {
     super.initState();
     stopwatch = Stopwatch();
-    mqttHandler = MQTTHandler('192.168.43.53');
-    mqttHandler.connect();
-    mqttHandler.valueNotifier.addListener(_mqttMsgChanged);
+    mqttHandler = MQTTHandler();
+    mqttHandler.receiveMsgNotifier.addListener(_mqttMsgChanged);
+    mqttHandler.hostStatusNotifier.addListener(_hostConChanged);
   }
 
   void startRace() {
@@ -72,12 +73,23 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
   }
 
   void _mqttMsgChanged() {
-    if (mqttHandler.valueNotifier.value == "Start" && raceStarted == true) {
+    if (mqttHandler.receiveMsgNotifier.value == "Start" &&
+        raceStarted == true) {
       startStopwatch();
-    } else if (mqttHandler.valueNotifier.value == "Stop") {
+    } else if (mqttHandler.receiveMsgNotifier.value == "Stop") {
       stopStopwatch();
       raceStarted = false;
     }
+  }
+
+  void _hostConChanged() {
+    setState(() {
+      connectionStatus = mqttHandler.hostStatusNotifier.value;
+    });
+  }
+
+  void connectHost() {
+    mqttHandler.connect('192.168.43.53');
   }
 
   void startStopwatch() {
@@ -205,6 +217,14 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: connectHost,
+        backgroundColor: connectionStatus
+            ? const Color.fromARGB(255, 54, 121, 45)
+            : const Color.fromARGB(255, 168, 51, 51),
+        foregroundColor: Colors.black,
+        child: const Icon(Icons.wifi),
       ),
     );
   }

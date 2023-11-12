@@ -6,16 +6,16 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
 class MQTTHandler {
-  final ValueNotifier<String> valueNotifier = ValueNotifier<String>("");
+  final ValueNotifier<String> receiveMsgNotifier = ValueNotifier<String>("");
+  final ValueNotifier<bool> hostStatusNotifier = ValueNotifier<bool>(false);
   final String isRunningTopic = 'soapBox/isRunning';
   final String lightTopic = 'soapBox/light';
-  final String _host;
 
+  late String _host;
   late MqttServerClient client;
 
-  MQTTHandler(String host) : _host = host;
-
-  Future<void> connect() async {
+  Future<void> connect(String host) async {
+    _host = host;
     client = MqttServerClient(_host, '');
     client.setProtocolV311();
     // client.keepAlivePeriod = 20;
@@ -36,34 +36,32 @@ class MQTTHandler {
 
     if (client.connectionStatus!.state == MqttConnectionState.connected) {
       print('SOAPBOX::Mosquitto client connected');
+      client.subscribe(isRunningTopic, MqttQos.atMostOnce);
+
+      client.updates!.listen((List<MqttReceivedMessage<MqttMessage?>>? c) {
+        final recMess = c![0].payload as MqttPublishMessage;
+        final pt =
+            MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+
+        // TODO: Improve this: value notifier doesnt callback function if value remains same but in fact it got a new msg
+        receiveMsgNotifier.value = pt;
+        receiveMsgNotifier.value = "";
+
+        // notifyListeners();
+
+        print(
+            'SOAPBOX::Change notification:: topic is <${c[0].topic}>, payload is <-- $pt -->');
+      });
+
+      // client.published!.listen((MqttPublishMessage message) {
+      //   print(
+      //       'SOAPBOX::Published notification:: topic is ${message.variableHeader!.topicName}, with Qos ${message.header!.qos}');
+      // });
     } else {
       print(
           'SOAPBOX::ERROR Mosquitto client connection failed - disconnecting, status is ${client.connectionStatus}');
       client.disconnect();
-      exit(-1);
     }
-
-    client.subscribe(isRunningTopic, MqttQos.atMostOnce);
-
-    client.updates!.listen((List<MqttReceivedMessage<MqttMessage?>>? c) {
-      final recMess = c![0].payload as MqttPublishMessage;
-      final pt =
-          MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-
-      // TODO: Improve this: value notifier doesnt callback function if value remains same but in fact it got a new msg
-      valueNotifier.value = pt;
-      valueNotifier.value = "";
-
-      // notifyListeners();
-
-      print(
-          'SOAPBOX::Change notification:: topic is <${c[0].topic}>, payload is <-- $pt -->');
-    });
-
-    // client.published!.listen((MqttPublishMessage message) {
-    //   print(
-    //       'SOAPBOX::Published notification:: topic is ${message.variableHeader!.topicName}, with Qos ${message.header!.qos}');
-    // });
   }
 
   void publishMessage(String message) {
@@ -86,6 +84,7 @@ class MQTTHandler {
   }
 
   void onDisconnected() {
+    hostStatusNotifier.value = false;
     print('SOAPBOX::OnDisconnected client callback - Client disconnection');
     if (client.connectionStatus!.disconnectionOrigin ==
         MqttDisconnectionOrigin.solicited) {
@@ -93,11 +92,11 @@ class MQTTHandler {
     } else {
       print(
           'SOAPBOX::OnDisconnected callback is unsolicited or none, this is incorrect - exiting');
-      exit(-1);
     }
   }
 
   void onConnected() {
+    hostStatusNotifier.value = true;
     print(
         'SOAPBOX::OnConnected client callback - Client connection was successful');
   }

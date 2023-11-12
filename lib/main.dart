@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'mqtt_handler.dart';
 
 void main() {
   runApp(const MQTTProjectApp());
@@ -26,11 +27,23 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
   bool isRunning = false;
   Duration duration = const Duration();
   late Stopwatch stopwatch;
+  late MQTTHandler mqttHandler;
 
   @override
   void initState() {
     super.initState();
     stopwatch = Stopwatch();
+    mqttHandler = MQTTHandler('192.168.43.53');
+    mqttHandler.connect();
+    mqttHandler.valueNotifier.addListener(_onChanged);
+  }
+
+  void _onChanged() {
+    if (mqttHandler.valueNotifier.value == "Start") {
+      start();
+    } else if (mqttHandler.valueNotifier.value == "Stop") {
+      stop();
+    }
   }
 
   void start() {
@@ -92,13 +105,13 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
               style: const TextStyle(
                   fontSize: 72.0, color: Color.fromARGB(255, 255, 255, 255)),
             ),
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 100.0),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: Color(0xFF03DAC5),
+                  backgroundColor: const Color(0xFF03DAC5),
                   child: IconButton(
                     icon: isRunning
                         ? const Icon(Icons.pause)
@@ -110,7 +123,7 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
                 const SizedBox(width: 20.0),
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: Color(0xFF03DAC5),
+                  backgroundColor: const Color(0xFF03DAC5),
                   child: IconButton(
                     icon: const Icon(Icons.stop),
                     onPressed: reset,

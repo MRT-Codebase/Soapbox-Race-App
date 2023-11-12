@@ -50,12 +50,14 @@ class MQTTHandler {
       final pt =
           MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
 
+      // TODO: Improve this: value notifier doesnt callback function if value remains same but in fact it got a new msg
       valueNotifier.value = pt;
+      valueNotifier.value = "";
+
       // notifyListeners();
 
       print(
           'SOAPBOX::Change notification:: topic is <${c[0].topic}>, payload is <-- $pt -->');
-      print('');
     });
 
     // client.published!.listen((MqttPublishMessage message) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'mqtt_handler.dart';
 
@@ -24,9 +25,16 @@ class MQTTProjectAppScreen extends StatefulWidget {
 }
 
 class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
-  bool isRunning = false;
+  bool isGreenOn = false;
+  bool isOrangeOn = false;
+  bool isRedOn = false;
+
+  bool raceStarted = false;
+
   Duration duration = const Duration();
   late Stopwatch stopwatch;
+  bool isStopwatchRunning = false;
+
   late MQTTHandler mqttHandler;
 
   @override
@@ -35,44 +43,71 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
     stopwatch = Stopwatch();
     mqttHandler = MQTTHandler('192.168.43.53');
     mqttHandler.connect();
-    mqttHandler.valueNotifier.addListener(_onChanged);
+    mqttHandler.valueNotifier.addListener(_mqttMsgChanged);
   }
 
-  void _onChanged() {
-    if (mqttHandler.valueNotifier.value == "Start") {
-      start();
+  void startRace() {
+    // TODO: Improve this: Create better way to create interval function calls
+    for (int i = 0; i < 3000; i += 500) {
+      // Use Timer to create a delay
+      Timer(Duration(milliseconds: i), () {
+        if (i % 1000 == 0) {
+          mqttHandler.publishMessage("GORB");
+          setState(() {
+            isGreenOn = true;
+            isOrangeOn = true;
+            isRedOn = true;
+          });
+        } else {
+          mqttHandler.publishMessage("OFF");
+          setState(() {
+            isGreenOn = false;
+            isOrangeOn = false;
+            isRedOn = false;
+          });
+        }
+      });
+    }
+    raceStarted = true;
+  }
+
+  void _mqttMsgChanged() {
+    if (mqttHandler.valueNotifier.value == "Start" && raceStarted == true) {
+      startStopwatch();
     } else if (mqttHandler.valueNotifier.value == "Stop") {
-      stop();
+      stopStopwatch();
+      raceStarted = false;
     }
   }
 
-  void start() {
+  void startStopwatch() {
     setState(() {
-      isRunning = true;
+      isStopwatchRunning = true;
       stopwatch.start();
       updateDuration();
     });
   }
 
-  void stop() {
+  void stopStopwatch() {
     setState(() {
-      isRunning = false;
+      isStopwatchRunning = false;
       stopwatch.stop();
     });
   }
 
-  void reset() {
+  void resetStopwatch() {
     setState(() {
-      isRunning = false;
+      isStopwatchRunning = false;
+      raceStarted = false;
       stopwatch.reset();
       duration = const Duration();
     });
   }
 
   void updateDuration() {
-    if (isRunning) {
+    if (isStopwatchRunning) {
       Future.delayed(const Duration(milliseconds: 30), () {
-        if (isRunning) {
+        if (isStopwatchRunning) {
           setState(() {
             duration = stopwatch.elapsed;
             updateDuration();
@@ -100,6 +135,42 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  margin: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isGreenOn
+                          ? const Color.fromARGB(255, 0, 255, 8)
+                          : const Color.fromARGB(255, 50, 97, 0)),
+                ),
+                Container(
+                  width: 50,
+                  height: 50,
+                  margin: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isOrangeOn
+                          ? const Color.fromARGB(255, 255, 165, 0)
+                          : const Color.fromARGB(255, 145, 99, 15)),
+                ),
+                Container(
+                  width: 50,
+                  height: 50,
+                  margin: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isRedOn
+                          ? const Color.fromARGB(255, 255, 0, 0)
+                          : const Color.fromARGB(255, 134, 46, 46)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 100.0),
             Text(
               durationToString(duration),
               style: const TextStyle(
@@ -113,10 +184,10 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
                   radius: 30,
                   backgroundColor: const Color(0xFF03DAC5),
                   child: IconButton(
-                    icon: isRunning
+                    icon: raceStarted
                         ? const Icon(Icons.pause)
                         : const Icon(Icons.play_arrow),
-                    onPressed: isRunning ? stop : start,
+                    onPressed: raceStarted ? stopStopwatch : startRace,
                     color: Colors.black,
                   ),
                 ),
@@ -126,7 +197,7 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
                   backgroundColor: const Color(0xFF03DAC5),
                   child: IconButton(
                     icon: const Icon(Icons.stop),
-                    onPressed: reset,
+                    onPressed: resetStopwatch,
                     color: Colors.black,
                   ),
                 )

@@ -8,8 +8,8 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 class MQTTHandler {
   final ValueNotifier<String> receiveMsgNotifier = ValueNotifier<String>("");
   final ValueNotifier<bool> hostStatusNotifier = ValueNotifier<bool>(false);
-  final String isRunningTopic = 'soapBox/isRunning';
-  final String lightTopic = 'soapBox/light';
+  final String raceStateTopic = 'soapBox/raceState';
+  final String lightStateTopic = 'soapBox/lightState';
 
   late String _host;
   late MqttServerClient client;
@@ -36,7 +36,7 @@ class MQTTHandler {
 
     if (client.connectionStatus!.state == MqttConnectionState.connected) {
       print('SOAPBOX::Mosquitto client connected');
-      client.subscribe(isRunningTopic, MqttQos.atMostOnce);
+      client.subscribe(raceStateTopic, MqttQos.atMostOnce);
 
       client.updates!.listen((List<MqttReceivedMessage<MqttMessage?>>? c) {
         final recMess = c![0].payload as MqttPublishMessage;
@@ -69,13 +69,14 @@ class MQTTHandler {
     builder.addString(message);
 
     if (client.connectionStatus?.state == MqttConnectionState.connected) {
-      client.publishMessage(lightTopic, MqttQos.atMostOnce, builder.payload!);
+      client.publishMessage(
+          lightStateTopic, MqttQos.atMostOnce, builder.payload!);
     }
   }
 
   void disconnect() {
-    client.unsubscribe(isRunningTopic);
-    client.unsubscribe(lightTopic);
+    client.unsubscribe(raceStateTopic);
+    client.unsubscribe(lightStateTopic);
     client.disconnect();
   }
 

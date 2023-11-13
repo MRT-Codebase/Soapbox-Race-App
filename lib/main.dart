@@ -48,28 +48,30 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
   }
 
   void startRace() {
-    // TODO: Improve this: Create better way to create interval function calls
-    for (int i = 0; i < 3000; i += 500) {
-      // Use Timer to create a delay
-      Timer(Duration(milliseconds: i), () {
-        if (i % 1000 == 0) {
-          mqttHandler.publishMessage("GORB");
-          setState(() {
-            isGreenOn = true;
-            isOrangeOn = true;
-            isRedOn = true;
-          });
-        } else {
-          mqttHandler.publishMessage("OFF");
-          setState(() {
-            isGreenOn = false;
-            isOrangeOn = false;
-            isRedOn = false;
-          });
-        }
-      });
+    if (connectionStatus == true) {
+      // TODO: Improve this: Create better way to create interval function calls
+      for (int i = 0; i < 3000; i += 500) {
+        // Use Timer to create a delay
+        Timer(Duration(milliseconds: i), () {
+          if (i % 1000 == 0) {
+            mqttHandler.publishMessage("GORB");
+            setState(() {
+              isGreenOn = true;
+              isOrangeOn = true;
+              isRedOn = true;
+            });
+          } else {
+            mqttHandler.publishMessage("OFF");
+            setState(() {
+              isGreenOn = false;
+              isOrangeOn = false;
+              isRedOn = false;
+            });
+          }
+        });
+      }
+      raceStarted = true;
     }
-    raceStarted = true;
   }
 
   void _mqttMsgChanged() {
@@ -194,7 +196,9 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
               children: <Widget>[
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: const Color(0xFF03DAC5),
+                  backgroundColor: connectionStatus
+                      ? const Color(0xFF03DAC5)
+                      : const Color.fromARGB(255, 153, 153, 153),
                   child: IconButton(
                     icon: raceStarted
                         ? const Icon(Icons.pause)
@@ -206,7 +210,9 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
                 const SizedBox(width: 20.0),
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: const Color(0xFF03DAC5),
+                  backgroundColor: connectionStatus
+                      ? const Color(0xFF03DAC5)
+                      : const Color.fromARGB(255, 153, 153, 153),
                   child: IconButton(
                     icon: const Icon(Icons.stop),
                     onPressed: resetStopwatch,

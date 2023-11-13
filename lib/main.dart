@@ -61,7 +61,7 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
               isRedOn = true;
             });
           } else {
-            mqttHandler.publishMessage("OFF");
+            mqttHandler.publishMessage("0000");
             setState(() {
               isGreenOn = false;
               isOrangeOn = false;
@@ -91,7 +91,7 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
   }
 
   void connectHost() {
-    mqttHandler.connect('192.168.43.53');
+    mqttHandler.connect('192.168.10.103');
   }
 
   void startStopwatch() {

@@ -8,8 +8,8 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 class MQTTHandler {
   final ValueNotifier<String> receiveMsgNotifier = ValueNotifier<String>("");
   final ValueNotifier<bool> hostStatusNotifier = ValueNotifier<bool>(false);
-  final String raceStateTopic = 'soapBox/raceState';
-  final String lightStateTopic = 'soapBox/lightState';
+  final String raceStateTopic = 'raceState';
+  final String lightStateTopic = 'lightState';
 
   late String _host;
   late MqttServerClient client;

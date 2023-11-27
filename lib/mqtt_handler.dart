@@ -10,6 +10,7 @@ class MQTTHandler {
   final ValueNotifier<bool> hostStatusNotifier = ValueNotifier<bool>(false);
   final String raceStateTopic = 'raceState';
   final String lightStateTopic = 'lightState';
+  final String analogStateTopic = 'analogState';
 
   late String _host;
   late MqttServerClient client;
@@ -37,6 +38,7 @@ class MQTTHandler {
     if (client.connectionStatus!.state == MqttConnectionState.connected) {
       print('SOAPBOX::Mosquitto client connected');
       client.subscribe(raceStateTopic, MqttQos.atMostOnce);
+      client.subscribe(analogStateTopic, MqttQos.atMostOnce);
 
       client.updates!.listen((List<MqttReceivedMessage<MqttMessage?>>? c) {
         final recMess = c![0].payload as MqttPublishMessage;

@@ -31,6 +31,8 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
 
   bool raceStarted = false;
 
+  String analogVal = "0";
+
   Duration duration = const Duration();
   late Stopwatch stopwatch;
   bool isStopwatchRunning = false;
@@ -50,7 +52,7 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
   void startRace() {
     if (connectionStatus == true) {
       // TODO: Improve this: Create better way to create interval function calls
-      for (int i = 0; i < 3000; i += 500) {
+      for (int i = 0; i < 2500; i += 500) {
         // Use Timer to create a delay
         Timer(Duration(milliseconds: i), () {
           if (i % 1000 == 0) {
@@ -81,6 +83,11 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
     } else if (mqttHandler.receiveMsgNotifier.value == "Stop") {
       stopStopwatch();
       raceStarted = false;
+    } else {
+      setState(() {
+        analogVal = mqttHandler.receiveMsgNotifier.value;
+        print(analogVal);
+      });
     }
   }
 
@@ -93,6 +100,8 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
   void connectHost() {
     mqttHandler.connect('192.168.10.103');
   }
+
+  void updateAnalog(String newValue) {}
 
   void startStopwatch() {
     setState(() {
@@ -190,7 +199,16 @@ class _MQTTProjectAppScreenState extends State<MQTTProjectAppScreen> {
               style: const TextStyle(
                   fontSize: 72.0, color: Color.fromARGB(255, 255, 255, 255)),
             ),
-            const SizedBox(height: 100.0),
+            const SizedBox(height: 50.0),
+            Text(
+              analogVal,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 50.0),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
